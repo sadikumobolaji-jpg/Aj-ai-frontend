@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>AJ — AI Assistant</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "system-ui", "sans-serif"]
+          },
+          animation: {
+            "fade-in": "fadeIn .25s ease-out",
+            "float": "float 4s ease-in-out infinite"
+          },
+          keyframes: {
+            fadeIn: {
+              "0%": {
+                opacity: "0",
+                transform: "translateY(8px)"
+              },
+              "100%": {
+                opacity: "1",
+                transform: "translateY(0)"
+              }
+            },
+            float: {
+              "0%,100%": {
+                transform: "translateY(0)"
+              },
+              "50%": {
+                transform: "translateY(-5px)"
+              }
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #27272a transparent;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 20% 10%, rgba(99,102,241,.10), transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(168,85,247,.08), transparent 30%),
+        #09090b;
+    }
+
+    .glass {
+      background: rgba(18,18,21,.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .message-content {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    textarea {
+      resize: none;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen text-zinc-100 font-sans">
+
+  <div class="min-h-screen flex flex-col max-w-5xl mx-auto">
+
+    <!-- HEADER -->
+    <header class="glass sticky top-0 z-50 border-b border-white/[0.06]">
+
+      <div class="h-16 px-4 sm:px-6 flex items-center justify-between">
+
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+
+          <div class="w-9 h-9 rounded-xl bg-white text-black
+                      flex items-center justify-center
+                      font-black text-sm shadow-lg">
+            AJ
+          </div>
+
+          <div>
+            <h1 class="font-semibold tracking-tight">
+              AJ
+            </h1>
+
+            <div class="flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+
+              <span class="text-[11px] text-zinc-500">
+                AI assistant
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Clear -->
+        <button
+          onclick="clearChat()"
+          class="text-xs text-zinc-500 hover:text-zinc-200
+                 transition px-3 py-2 rounded-lg
+                 hover:bg-white/[0.05]">
+          Clear
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <!-- CHAT AREA -->
+    <main
+      id="chat"
+      class="flex-1 overflow-y-auto px-4 sm:px-6 py-8 pb-36"
+    >
+
+      <!-- EMPTY STATE -->
+      <section
+        id="welcome"
+        class="min-h-[65vh] flex flex-col
+               items-center justify-center text-center
+               animate-fade-in"
+      >
+
+        <div
+          class="w-16 h-16 rounded-2xl
+                 border border-white/[0.08]
+                 bg-white/[0.03]
+                 flex items-center justify-center
+                 mb-6 animate-float"
+        >
+          <span class="text-xl font-black">AJ</span>
+        </div>
+
+        <p class="text-xs uppercase tracking-[.25em] text-zinc-600 mb-3">
+          Artificial Intelligence
+        </p>
+
+        <h2
+          class="text-3xl sm:text-5xl font-semibold
+                 tracking-tight mb-4"
+        >
+          What can I help you build?
+        </h2>
+
+        <p class="text-zinc-500 max-w-md text-sm leading-6">
+          Ask a question, brainstorm an idea, write something,
+          or just start a conversation.
+        </p>
+
+        <!-- Suggestions -->
+        <div
+          class="grid grid-cols-1 sm:grid-cols-3
+                 gap-2 mt-8 w-full max-w-2xl"
+        >
+
+          <button
+            onclick="useSuggestion('Help me build a website')"
+            class="suggestion"
+          >
+            Build a website
+          </button>
+
+          <button
+            onclick="useSuggestion('Give me a creative idea')"
+            class="suggestion"
+          >
+            Creative ideas
+          </button>
+
+          <button
+            onclick="useSuggestion('Explain something to me')"
+            class="suggestion"
+          >
+            Explain something
+          </button>
+
+        </div>
+
+      </section>
+
+    </main>
+
+
+    <!-- INPUT AREA -->
+    <div
+      class="fixed bottom-0 left-0 right-0 z-40
+             pointer-events-none"
+    >
+
+      <div
+        class="max-w-5xl mx-auto px-4 sm:px-6 pb-4
+               pointer-events-auto"
+      >
+
+        <div
+          class="glass border border-white/[0.08]
+                 rounded-2xl p-2 shadow-2xl"
+        >
+
+          <div class="flex items-end gap-2">
+
+            <textarea
+              id="messageInput"
+              rows="1"
+              placeholder="Message AJ..."
+              class="flex-1 bg-transparent outline-none
+                     px-3 py-3 text-sm
+                     placeholder:text-zinc-600
+                     max-h-40"
+            ></textarea>
+
+            <button
+              id="sendButton"
+              onclick="sendMessage()"
+              class="w-11 h-11 shrink-0
+                     rounded-xl bg-white text-black
+                     flex items-center justify-center
+                     hover:bg-zinc-200
+                     active:scale-95 transition"
+            >
+
+              <!-- Arrow -->
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M12 19V5"/>
+                <path d="m5 12 7-7 7 7"/>
+              </svg>
+
+            </button>
+
+          </div>
+
+          <div
+            class="px-3 pb-1 pt-1
+                   flex justify-between
+                   text-[10px] text-zinc-700"
+          >
+            <span>AJ AI</span>
+            <span>Enter to send · Shift + Enter for new line</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- STYLES FOR SUGGESTIONS -->
+<script>
+  const API_URL = "http://localhost:5000/chat";
+
+  const chat = document.getElementById("chat");
+  const input = document.getElementById("messageInput");
+  const sendButton = document.getElementById("sendButton");
+  const welcome = document.getElementById("welcome");
+
+  let isSending = false;
+
+
+  // ============================================
+  // SEND MESSAGE
+  // ============================================
+
+  async function sendMessage() {
+
+    if (isSending) return;
+
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    isSending = true;
+
+    // Hide welcome screen
+    welcome.style.display = "none";
+
+    // Add user's message
+    addMessage(message, "user");
+
+    // Reset input
+    input.value = "";
+    input.style.height = "auto";
+
+    // Show typing indicator
+    const typing = showTyping();
+
+    // Disable button
+    sendButton.disabled = true;
+    sendButton.classList.add("opacity-50", "cursor-not-allowed");
+
+    try {
+
+      const response = await fetch(API_URL, {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          message: message
+        })
+      });
+
+
+      // Try to read JSON response
+      const data = await response.json();
+
+      // Remove typing indicator
+      typing.remove();
+
+
+      // Handle API errors
+      if (!response.ok) {
+
+        throw new Error(
+          data.error || "The server returned an error."
+        );
+
+      }
+
+
+      // Get AJ's response
+      const reply = data.response;
+
+
+      if (!reply) {
+
+        throw new Error(
+          "AJ returned an empty response."
+        );
+
+      }
+
+
+      // Add AI message
+      addMessage(reply, "ai");
+
+
+    } catch (error) {
+
+      console.error("AJ Error:", error);
+
+      typing.remove();
+
+      addMessage(
+        "Sorry, I couldn't connect to AJ right now. Make sure the Flask server is running.",
+        "ai"
+      );
+
+    } finally {
+
+      isSending = false;
+
+      sendButton.disabled = false;
+
+      sendButton.classList.remove(
+        "opacity-50",
+        "cursor-not-allowed"
+      );
+
+      input.focus();
+
+    }
+  }
+
+
+  // ============================================
+  // ADD MESSAGE
+  // ============================================
+
+  function addMessage(text, sender) {
+
+    const wrapper = document.createElement("div");
+
+    wrapper.className =
+      "flex mb-5 animate-fade-in " +
+      (
+        sender === "user"
+          ? "justify-end"
+          : "justify-start"
+      );
+
+
+    const message = document.createElement("div");
+
+
+    if (sender === "user") {
+
+      message.className =
+        "max-w-[85%] sm:max-w-[70%] " +
+        "bg-white text-black " +
+        "px-4 py-3 rounded-2xl rounded-br-md " +
+        "text-sm leading-6 shadow-lg";
+
+    } else {
+
+      message.className =
+        "max-w-[90%] sm:max-w-[75%] " +
+        "text-zinc-300 " +
+        "px-1 py-2 " +
+        "text-sm leading-7";
+
+    }
+
+
+    message.classList.add("message-content");
+
+    // textContent prevents HTML injection
+    message.textContent = text;
+
+
+    wrapper.appendChild(message);
+
+    chat.appendChild(wrapper);
+
+    scrollToBottom();
+  }
+
+
+  // ============================================
+  // TYPING INDICATOR
+  // ============================================
+
+  function showTyping() {
+
+    const wrapper = document.createElement("div");
+
+    wrapper.className =
+      "flex mb-5 animate-fade-in";
+
+
+    wrapper.innerHTML = `
+      <div class="flex items-center gap-1 px-1 py-3">
+
+        <span
+          class="w-1.5 h-1.5 bg-zinc-600 rounded-full animate-bounce">
+        </span>
+
+        <span
+          class="w-1.5 h-1.5 bg-zinc-600 rounded-full animate-bounce"
+          style="animation-delay:.15s">
+        </span>
+
+        <span
+          class="w-1.5 h-1.5 bg-zinc-600 rounded-full animate-bounce"
+          style="animation-delay:.3s">
+        </span>
+
+      </div>
+    `;
+
+
+    chat.appendChild(wrapper);
+
+    scrollToBottom();
+
+    return wrapper;
+  }
+
+
+  // ============================================
+  // CLEAR CHAT
+  // ============================================
+
+  function clearChat() {
+
+    if (isSending) return;
+
+    // Remove every message
+    chat.innerHTML = "";
+
+    // Put welcome screen back
+    chat.appendChild(welcome);
+
+    welcome.style.display = "flex";
+
+    input.value = "";
+
+    input.style.height = "auto";
+
+    input.focus();
+  }
+
+
+  // ============================================
+  // SUGGESTIONS
+  // ============================================
+
+  function useSuggestion(text) {
+
+    input.value = text;
+
+    input.focus();
+
+    autoResize();
+  }
+
+
+  // ============================================
+  // TEXTAREA AUTO RESIZE
+  // ============================================
+
+  function autoResize() {
+
+    input.style.height = "auto";
+
+    input.style.height =
+      Math.min(input.scrollHeight, 160) + "px";
+  }
+
+
+  input.addEventListener("input", autoResize);
+
+
+  // ============================================
+  // ENTER TO SEND
+  // ============================================
+
+  input.addEventListener("keydown", function(event) {
+
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+
+      event.preventDefault();
+
+      sendMessage();
+
+    }
+
+  });
+
+
+  // ============================================
+  // SCROLL TO BOTTOM
+  // ============================================
+
+  function scrollToBottom() {
+
+    requestAnimationFrame(() => {
+
+      chat.scrollTo({
+        top: chat.scrollHeight,
+        behavior: "smooth"
+      });
+
+    });
+
+  }
+</script>
+
+</body>
+      </html>
